@@ -13,8 +13,65 @@ const PAGES_DIR = path.join(BUILD_DIR);
 fs.ensureDirSync(BUILD_DIR);
 fs.ensureDirSync(BLOG_DIR);
 
+// Common navigation template
+const navigationTemplate = `
+    <nav>
+        <div class="logo">My Website</div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/blog">Blog</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/faq">FAQ</a></li>
+        </ul>
+    </nav>
+`;
+
 // Template function
 function createHtmlTemplate(attributes, content, isPage = false, blogPosts = null) {
+    // Special template for home page
+    if (attributes.template === 'home') {
+        return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${attributes.title || 'My Website'}</title>
+            <link rel="stylesheet" href="/css/style.css">
+        </head>
+        <body>
+            <header>
+                ${navigationTemplate}
+            </header>
+
+            <main>
+                <section class="hero">
+                    ${content}
+                </section>
+
+                <section class="featured">
+                    <h2>Latest Blog Posts</h2>
+                    <div class="posts-grid">
+                        ${blogPosts ? blogPosts.map(post => `
+                            <div class="blog-post-preview">
+                                <h2><a href="/blog/${post.slug}">${post.title}</a></h2>
+                                ${post.date ? `<time>${new Date(post.date).toLocaleDateString()}</time>` : ''}
+                            </div>
+                        `).join('') : '<p>Coming soon...</p>'}
+                    </div>
+                </section>
+            </main>
+
+            <footer>
+                <p>&copy; 2024 My Website. All rights reserved.</p>
+            </footer>
+
+            <script src="js/main.js"></script>
+        </body>
+        </html>`;
+    }
+
+    // Original template for other pages
     return `
         <!DOCTYPE html>
         <html lang="en">
@@ -26,15 +83,7 @@ function createHtmlTemplate(attributes, content, isPage = false, blogPosts = nul
         </head>
         <body>
             <header>
-                <nav>
-                    <div class="logo">My Website</div>
-                    <ul class="nav-links">
-                        <li><a href="/">Home</a></li>
-                        <li><a href="/blog">Blog</a></li>
-                        <li><a href="/about">About</a></li>
-                        <li><a href="/faq">FAQ</a></li>
-                    </ul>
-                </nav>
+                ${navigationTemplate}
             </header>
             <main class="${isPage ? 'page-content' : 'blog-post'}">
                 <article>
@@ -109,11 +158,19 @@ async function buildSite() {
             }
         }
 
+        // Build index page
+        const indexContent = fs.readFileSync(path.join(SOURCE_DIR, 'pages', 'index.md'), 'utf-8');
+        const { attributes, body } = frontMatter(indexContent);
+        const htmlContent = marked.parse(body);
+        const indexTemplate = createHtmlTemplate(attributes, htmlContent, true, blogPosts);
+        fs.writeFileSync(path.join(BUILD_DIR, 'index.html'), indexTemplate.trim());
+        console.log('✅ Built index.html');
+
         // Create blog index page
         const blogIndexContent = fs.readFileSync(path.join(SOURCE_DIR, 'pages', 'blog.md'), 'utf-8');
-        const { attributes, body } = frontMatter(blogIndexContent);
-        const htmlContent = marked.parse(body);
-        const blogIndexTemplate = createHtmlTemplate(attributes, htmlContent, true, blogPosts);
+        const { attributes: blogAttributes, body: blogBody } = frontMatter(blogIndexContent);
+        const blogHtmlContent = marked.parse(blogBody);
+        const blogIndexTemplate = createHtmlTemplate(blogAttributes, blogHtmlContent, true, blogPosts);
         fs.writeFileSync(path.join(BLOG_DIR, 'index.html'), blogIndexTemplate.trim());
         console.log('✅ Built blog/index.html');
 
