@@ -81,7 +81,9 @@ function createHomeTemplate(attributes, content, blogPosts) {
         <main>
             <section class="hero">
                 <div class="container">
-                    ${content}
+                    <h1>Welcome to my<br><span class="highlight">home on the web</span></h1>
+                    <p>I'm a entrepreneur, comic artist & programmer. I'm passionate about the intersection of technology, spirituality, and art.</p>
+                    <a href="" class="cta-button" data-path="/blog">Read the Blog</a>
                 </div>
             </section>
             <section class="featured">
