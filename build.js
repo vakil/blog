@@ -33,6 +33,8 @@ function createDirectories() {
 
 // Template generators
 function createBaseTemplate(attributes, content, options = {}) {
+    const cssPath = options.depth === 2 ? '../../css/style.css' : '../css/style.css';
+    
     return `
         <!DOCTYPE html>
         <html lang="en">
@@ -40,8 +42,11 @@ function createBaseTemplate(attributes, content, options = {}) {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>${attributes.title || 'My Website'}</title>
-            <link rel="stylesheet" href="../css/style.css">
+            <link rel="stylesheet" href="${cssPath}">
             <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+            <style>
+                /* Add any page-specific styles here */
+            </style>
         </head>
         <body>
             <header>
@@ -75,12 +80,16 @@ function createHomeTemplate(attributes, content, blogPosts) {
     const mainContent = `
         <main>
             <section class="hero">
-                ${content}
+                <div class="container">
+                    ${content}
+                </div>
             </section>
             <section class="featured">
-                <h2>Latest Blog Posts</h2>
-                <div class="posts-grid">
-                    ${blogPosts ? renderBlogPreviews(blogPosts) : '<p>Coming soon...</p>'}
+                <div class="container">
+                    <h2>Latest Blog Posts</h2>
+                    <div class="posts-grid">
+                        ${blogPosts ? renderBlogPreviews(blogPosts) : '<p>Coming soon...</p>'}
+                    </div>
                 </div>
             </section>
         </main>
@@ -88,15 +97,19 @@ function createHomeTemplate(attributes, content, blogPosts) {
     
     const scripts = `
         <script>
+            // Determine if we're on GitHub Pages
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            const basePath = isGitHubPages ? '/blog' : '';
+
             async function fetchLatestPosts() {
                 try {
-                    const response = await fetch('./blog/posts.json');
+                    const response = await fetch(\`\${basePath}/blog/posts.json\`);
                     const posts = await response.json();
                     
                     const postsGrid = document.querySelector('.posts-grid');
                     postsGrid.innerHTML = posts.slice(0, 3).map(post => \`
                         <div class="blog-post-preview">
-                            <h2><a href="./blog/\${post.slug}">\${post.title}</a></h2>
+                            <h2><a href="\${basePath}/blog/\${post.slug}">\${post.title}</a></h2>
                             \${post.date ? \`<time>\${new Date(post.date).toLocaleDateString()}</time>\` : ''}
                         </div>
                     \`).join('');
@@ -113,25 +126,26 @@ function createHomeTemplate(attributes, content, blogPosts) {
     return createBaseTemplate(attributes, mainContent, { scripts });
 }
 
-function createPageTemplate(attributes, content, blogPosts = null) {
+function createPageTemplate(attributes, content, blogPosts = null, options = {}) {
     const mainContent = `
         <main class="page-content">
             <article>
                 <h1>${attributes.title || 'Untitled'}</h1>
                 ${attributes.date ? `<time>${new Date(attributes.date).toLocaleDateString()}</time>` : ''}
                 ${content}
-                ${blogPosts ? `<div class="blog-list">${renderBlogPreviews(blogPosts)}</div>` : ''}
+                ${blogPosts ? `<div class="blog-list">${renderBlogPreviews(blogPosts, options.depth)}</div>` : ''}
             </article>
         </main>
     `;
-    return createBaseTemplate(attributes, mainContent);
+    return createBaseTemplate(attributes, mainContent, options);
 }
 
 // Helper functions
-function renderBlogPreviews(posts) {
+function renderBlogPreviews(posts, depth = 1) {
+    const prefix = depth === 2 ? '../' : '';
     return posts.map(post => `
         <div class="blog-post-preview">
-            <h2><a href="/blog/${post.slug}">${post.title}</a></h2>
+            <h2><a href="${prefix}${post.slug}">${post.title}</a></h2>
             ${post.date ? `<time>${new Date(post.date).toLocaleDateString()}</time>` : ''}
         </div>
     `).join('');
@@ -168,7 +182,7 @@ async function buildBlogPosts() {
             const postDir = path.join(CONFIG.paths.blog, postName);
             await fs.ensureDir(postDir);
             
-            const postTemplate = createPageTemplate(attributes, content);
+            const postTemplate = createPageTemplate(attributes, content, null, { depth: 2 });
             await fs.writeFile(path.join(postDir, 'index.html'), postTemplate.trim());
             console.log(`✅ Built ${postName}/index.html`);
         }
@@ -195,7 +209,12 @@ async function buildPages(blogPosts) {
         const { attributes, content } = await processMarkdownFile(path.join(pagesDir, page));
         const pageName = page.replace('.md', '');
         
-        const template = createPageTemplate(attributes, content, pageName === 'blog' ? blogPosts : null);
+        const template = createPageTemplate(
+            attributes, 
+            content, 
+            pageName === 'blog' ? blogPosts : null,
+            { depth: 1 }
+        );
         const outputPath = path.join(CONFIG.paths.build, pageName, 'index.html');
 
         await fs.ensureDir(path.dirname(outputPath));
