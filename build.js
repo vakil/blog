@@ -70,7 +70,32 @@ function createHomeTemplate(attributes, content, blogPosts) {
             </section>
         </main>
     `;
-    return createBaseTemplate(attributes, mainContent, { scripts: '<script src="js/main.js"></script>' });
+    
+    const scripts = `
+        <script>
+            async function fetchLatestPosts() {
+                try {
+                    const response = await fetch('./blog/posts.json');
+                    const posts = await response.json();
+                    
+                    const postsGrid = document.querySelector('.posts-grid');
+                    postsGrid.innerHTML = posts.slice(0, 3).map(post => \`
+                        <div class="blog-post-preview">
+                            <h2><a href="./blog/\${post.slug}">\${post.title}</a></h2>
+                            \${post.date ? \`<time>\${new Date(post.date).toLocaleDateString()}</time>\` : ''}
+                        </div>
+                    \`).join('');
+                } catch (error) {
+                    console.error('Error fetching blog posts:', error);
+                    const postsGrid = document.querySelector('.posts-grid');
+                    postsGrid.innerHTML = '<p>Coming soon...</p>';
+                }
+            }
+            fetchLatestPosts();
+        </script>
+    `;
+    
+    return createBaseTemplate(attributes, mainContent, { scripts });
 }
 
 function createPageTemplate(attributes, content, blogPosts = null) {
