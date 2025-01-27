@@ -5,8 +5,6 @@ description: Welcome to my new blog
 tags: [welcome, first-post]
 ---
 
-# Welcome to My Blog!
-
 This is my first blog post. I'm excited to share my thoughts and ideas with you.
 
 ## What to Expect
