@@ -4,21 +4,24 @@
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Frequently Asked Questions</title>
-            <link rel="stylesheet" href="/css/style.css">
+            <link rel="stylesheet" href="../css/style.css">
+            <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
         </head>
         <body>
             <header>
-                
+                <div class="container">
+                    
             <nav>
                 <div class="logo">My Website</div>
                 <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/blog">Blog</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/faq">FAQ</a></li>
+                    <li><a href="/" data-path="">Home</a></li>
+                    <li><a href="/blog" data-path="/blog">Blog</a></li>
+                    <li><a href="/about" data-path="/about">About</a></li>
+                    <li><a href="/faq" data-path="/faq">FAQ</a></li>
                 </ul>
             </nav>
         
+                </div>
             </header>
             
         <main class="page-content">
@@ -45,8 +48,20 @@
         </main>
     
             <footer>
-                <p>&copy; 2024 My Website. All rights reserved.</p>
+                <div class="container">
+                    <p>&copy; 2024 My Website. All rights reserved.</p>
+                </div>
             </footer>
+            <script>
+                // Determine if we're on GitHub Pages
+                const isGitHubPages = window.location.hostname.includes('github.io');
+                const basePath = isGitHubPages ? '/blog' : '';
+
+                // Update navigation links
+                document.querySelectorAll('[data-path]').forEach(link => {
+                    link.href = `${basePath}${link.dataset.path}`;
+                });
+            </script>
             
         </body>
         </html>
