@@ -5,4 +5,4 @@ template: home
 
 # Welcome to My Website
 
-A simple and elegant space for sharing thoughts and ideas. 
+A simple and elegant space for sharing thoughts, ideas and more.

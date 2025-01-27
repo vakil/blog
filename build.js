@@ -132,6 +132,13 @@ async function buildBlogPosts() {
             await fs.writeFile(path.join(postDir, 'index.html'), postTemplate.trim());
             console.log(`✅ Built ${postName}/index.html`);
         }
+
+        // Generate posts.json for the homepage
+        await fs.writeFile(
+            path.join(CONFIG.paths.blog, 'posts.json'),
+            JSON.stringify(blogPosts.sort((a, b) => new Date(b.date) - new Date(a.date)))
+        );
+        console.log('✅ Generated posts.json');
     }
     return blogPosts;
 }
@@ -140,23 +147,16 @@ async function buildPages(blogPosts) {
     const pagesDir = path.join(CONFIG.paths.source, 'pages');
     if (!fs.existsSync(pagesDir)) return;
 
-    const pages = fs.readdirSync(pagesDir).filter(file => file.endsWith('.md'));
+    const pages = fs.readdirSync(pagesDir)
+        .filter(file => file.endsWith('.md') && file !== 'index.md');
     console.log(`📄 Found ${pages.length} pages`);
 
     for (const page of pages) {
         const { attributes, content } = await processMarkdownFile(path.join(pagesDir, page));
         const pageName = page.replace('.md', '');
         
-        let template;
-        if (attributes.template === 'home') {
-            template = createHomeTemplate(attributes, content, blogPosts);
-        } else {
-            template = createPageTemplate(attributes, content, pageName === 'blog' ? blogPosts : null);
-        }
-
-        const outputPath = pageName === 'index' 
-            ? path.join(CONFIG.paths.build, 'index.html')
-            : path.join(CONFIG.paths.build, pageName, 'index.html');
+        const template = createPageTemplate(attributes, content, pageName === 'blog' ? blogPosts : null);
+        const outputPath = path.join(CONFIG.paths.build, pageName, 'index.html');
 
         await fs.ensureDir(path.dirname(outputPath));
         await fs.writeFile(outputPath, template.trim());

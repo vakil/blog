@@ -14,7 +14,6 @@ yarn-error.log*
 # Build output
 /build
 /dist
-/public
 
 # IDE and editor files
 .idea/
